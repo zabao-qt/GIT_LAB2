@@ -194,12 +194,12 @@ update7SEG(int index) {
 		default :
 			break ;
 	}
-	display7SEG(led_buffer[index_led]);
+	display7SEG(led_buffer[index]);
 }
 
 int counter = 100; // 100 loops * 10ms = 1s
 int state = 1;
-void HAL_TIM_PeriodElapsedCallback ( TIM_HandleTypeDef * htim )
+void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef * htim)
 {
 	counter--;
 
