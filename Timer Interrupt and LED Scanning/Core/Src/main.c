@@ -210,8 +210,8 @@ void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef * htim)
 		HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
 	}
 
-	// 7SEGs update every 500ms
-	if(counter % 50 == 0) {
+	// 1Hz cycle ~ 250ms/LED
+	if(counter % 25 == 0) {
 		if (index_led >= MAX_LED) index_led = 0;
 		update7SEG(index_led++);
 	}
