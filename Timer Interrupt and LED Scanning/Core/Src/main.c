@@ -197,6 +197,14 @@ void update7SEG(int index) {
 	display7SEG(led_buffer[index]);
 }
 
+void updateClockBuffer(int hour, int minute) {
+	led_buffer[0] = hour / 10;
+	led_buffer[1] = hour % 10;
+	led_buffer[2] = minute / 10;
+	led_buffer[3] = minute % 10;
+}
+
+
 int counter = 100; // 100 loops * 10ms = 1s
 int state = 1;
 void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef * htim)
@@ -249,11 +257,23 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  int hour = 15 , minute = 8 , second = 50;
   while (1)
   {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+	  second ++;
+	  if (second >= 60) {
+		  second = 0;
+		  minute++;
+	  }
+	  if (minute >= 60) {
+		  minute = 0;
+		  hour++;
+	  }
+	  if (hour >= 24) {
+	  hour = 0;
+	  }
+	  updateClockBuffer(hour, minute);
+	  HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
