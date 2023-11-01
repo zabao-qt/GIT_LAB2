@@ -56,7 +56,49 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int timer0_counter = 0;
+int timer0_flag = 0;
+int timer1_counter = 0;
+int timer1_flag = 0;
+int timer2_counter = 0;
+int timer2_flag = 0;
+int timer3_counter = 0;
+int timer3_flag = 0;
+int TIMER_CYCLE = 10; // 10ms
+void setTimer0(int duration) {
+	timer0_counter = duration / TIMER_CYCLE;
+	timer0_flag = 0;
+}
+void setTimer1(int duration) {
+	timer1_counter = duration / TIMER_CYCLE;
+	timer1_flag = 0;
+}
+void setTimer2(int duration) {
+	timer2_counter = duration / TIMER_CYCLE;
+	timer2_flag = 0;
+}
+void setTimer3(int duration) {
+	timer3_counter = duration / TIMER_CYCLE;
+	timer3_flag = 0;
+}
+void timer_run() {
+	if (timer0_counter > 0) {
+		timer0_counter--;
+		if (timer0_counter == 0) timer0_flag = 1;
+	}
+	if (timer1_counter > 0) {
+			timer1_counter--;
+			if (timer1_counter == 0) timer1_flag = 1;
+		}
+	if (timer2_counter > 0) {
+			timer2_counter--;
+			if (timer2_counter == 0) timer2_flag = 1;
+		}
+	if (timer3_counter > 0) {
+			timer3_counter--;
+			if (timer3_counter == 0) timer3_flag = 1;
+		}
+}
 /* USER CODE END 0 */
 
 /**
@@ -204,25 +246,9 @@ void updateClockBuffer(int hour, int minute) {
 	led_buffer[3] = minute % 10;
 }
 
-
-int counter = 100; // 100 loops * 10ms = 1s
-int state = 1;
 void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef * htim)
 {
-	counter--;
-
-	// LED_RED blink every 1s
-	if(counter <= 0) {
-		counter = 100;
-		HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-		HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
-	}
-
-	// 1Hz cycle ~ 250ms/LED
-	if(counter % 25 == 0) {
-		if (index_led >= MAX_LED) index_led = 0;
-		update7SEG(index_led++);
-	}
+	timer_run();
 }
 
 
@@ -257,23 +283,49 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  // Init clock 15:08
   int hour = 15 , minute = 8 , second = 50;
+  updateClockBuffer(hour, minute);
+  // Start timers
+  setTimer0(10);
+  setTimer1(10);
+  setTimer2(10);
+  int LEDcounter = 0; // To check if 4 LEDs are scanned in 1s
   while (1)
   {
-	  second ++;
-	  if (second >= 60) {
-		  second = 0;
-		  minute++;
+	  // LED-RED blinks every 2s
+	  if(timer0_flag == 1) {
+		  HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+		  setTimer0(2000);
 	  }
-	  if (minute >= 60) {
-		  minute = 0;
-		  hour++;
+	  // DOT LEDs blink every 1s
+	  if(timer1_flag == 1) {
+		  HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
+		  setTimer1(1000);
 	  }
-	  if (hour >= 24) {
-	  hour = 0;
+	  // Update 7SEG LEDs every 250ms
+	  if(timer2_flag == 1) {
+		  setTimer2(250);
+		  update7SEG(index_led++);
+		  LEDcounter++;
+		  if(LEDcounter == 4) {
+			  second++;
+			  if(second >= 60) {
+				  second = 0;
+				  minute++;
+			  }
+			  if(minute >= 60) {
+				  minute = 0;
+				  hour++;
+			  }
+			  if(hour >= 24) {
+				  hour = 0;
+			  }
+			  updateClockBuffer(hour, minute);
+			  index_led = 0;
+			  LEDcounter = 0;
+		  }
 	  }
-	  updateClockBuffer(hour, minute);
-	  HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
