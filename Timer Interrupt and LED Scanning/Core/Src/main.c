@@ -62,6 +62,8 @@ int timer1_counter = 0;
 int timer1_flag = 0;
 int timer2_counter = 0;
 int timer2_flag = 0;
+int timer3_counter = 0;
+int timer3_flag = 0;
 int TIMER_CYCLE = 10; // 10ms
 void setTimer0(int duration) {
 	timer0_counter = duration / TIMER_CYCLE;
@@ -75,6 +77,10 @@ void setTimer2(int duration) {
 	timer2_counter = duration / TIMER_CYCLE;
 	timer2_flag = 0;
 }
+void setTimer3(int duration) {
+	timer3_counter = duration / TIMER_CYCLE;
+	timer3_flag = 0;
+}
 void timer_run() {
 	if (timer0_counter > 0) {
 		timer0_counter--;
@@ -87,6 +93,10 @@ void timer_run() {
 	if (timer2_counter > 0) {
 		timer2_counter--;
 		if (timer2_counter == 0) timer2_flag = 1;
+	}
+	if (timer3_counter > 0) {
+		timer3_counter--;
+		if (timer3_counter == 0) timer3_flag = 1;
 	}
 }
 /* USER CODE END 0 */
@@ -236,6 +246,62 @@ void updateClockBuffer(int hour, int minute) {
 	led_buffer[3] = minute % 10;
 }
 
+const int MAX_LED_MATRIX = 8;
+int index_led_matrix = 0;
+uint8_t matrix_buffer [8] = {b11100111, b11000011, b10011001, b10011001, b10000001, b10000001, b10011001, b10011001}; //A, binary to see it easier
+
+void displayARow(int num) {
+	uint8_t matrix = matrix_buffer [ num ];
+	HAL_GPIO_WritePin(ENM0_GPIO_Port, ENM0_Pin, (matrix >> 0) & x01 ? 1 : 0);
+	HAL_GPIO_WritePin(ENM1_GPIO_Port, ENM1_Pin, (matrix >> 1) & x01 ? 1 : 0);
+	HAL_GPIO_WritePin(ENM2_GPIO_Port, ENM2_Pin, (matrix >> 2) & x01 ? 1 : 0);
+	HAL_GPIO_WritePin (ENM3_GPIO_Port, ENM3_Pin , (matrix >> 3) & x01 ? 1 : 0);
+	HAL_GPIO_WritePin(ENM4_GPIO_Port, ENM4_Pin, (matrix >> 4) & x01 ? 1 : 0) ;
+	HAL_GPIO_WritePin(ENM5_GPIO_Port, ENM5_Pin, (matrix >> 5) & x01 ? 1 : 0) ;
+	HAL_GPIO_WritePin(ENM6_GPIO_Port, ENM6_Pin, (matrix >> 6) & x01 ? 1 : 0) ;
+	HAL_GPIO_WritePin(ENM7_GPIO_Port, ENM7_Pin, (matrix >> 7) & x01 ? 1 : 0);
+}
+
+void updateLEDMatrix ( int index ) {
+	switch(index) {
+		case 0:
+			HAL_GPIO_WritePin(ROW0_GPIO_Port, ROW0_Pin, 0);
+			displayARow(index);
+			break;
+		case 1:
+			HAL_GPIO_WritePin(ROW0_GPIO_Port, ROW1_Pin, 0);
+			displayARow(index);
+			break;
+		case 2:
+			HAL_GPIO_WritePin(ROW0_GPIO_Port, ROW2_Pin, 0);
+			displayARow(index);
+			break;
+		case 3:
+			HAL_GPIO_WritePin(ROW0_GPIO_Port, ROW3_Pin, 0);
+			displayARow(index);
+			break;
+		case 4:
+			HAL_GPIO_WritePin(ROW0_GPIO_Port, ROW4_Pin, 0);
+			displayARow(index);
+			break;
+		case 5:
+			HAL_GPIO_WritePin(ROW0_GPIO_Port, ROW5_Pin, 0);
+			displayARow(index);
+			break;
+		case 6:
+			HAL_GPIO_WritePin(ROW0_GPIO_Port, ROW6_Pin, 0);
+			displayARow(index);
+			break;
+		case 7:
+			HAL_GPIO_WritePin(ROW0_GPIO_Port, ROW7_Pin, 0) ;
+			displayARow(index) ;
+			break;
+		default:
+			break;
+		}
+}
+
+
 void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef * htim)
 {
 	timer_run();
@@ -280,6 +346,7 @@ int main(void)
   setTimer0(10);
   setTimer1(10);
   setTimer2(10);
+  setTimer3(100);
   int LEDcounter = 0; // To check if 4 LEDs are scanned in 1s
   while (1)
   {
@@ -314,6 +381,13 @@ int main(void)
 			  updateClockBuffer(hour, minute);
 			  index_led = 0;
 			  LEDcounter = 0;
+		  }
+	  }
+	  if(timer3_flag == 1) {
+		  setTimer3(180);
+		  updateLEDMatrix(index_led_matrix++);
+		  if(index_led_matrix == MAX_LED_MATRIX) {
+			  index_led_matrix = 0;
 		  }
 	  }
   }
